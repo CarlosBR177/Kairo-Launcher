@@ -22,10 +22,10 @@ jobs:
   windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Java 21 e 25 (1.21.x e 26.x)
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: |
@@ -36,6 +36,40 @@ jobs:
       - name: Compilar o mod Kairo Client (todas as versões)
         working-directory: mod
         run: ./gradlew.bat build --no-daemon
+
+      # TEMPORÁRIO: mostra as assinaturas da 26.3 usadas pelas telas do Kairo (roda mesmo se o build falhar)
+      - name: Diagnóstico 26.3
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $jar = Get-ChildItem -Recurse -Filter minecraft-client.jar -ErrorAction SilentlyContinue "$env:USERPROFILE/.gradle/caches/fabric-loom" |
+            Where-Object { $_.FullName -match '26\.3' } | Select-Object -First 1
+          if (-not $jar) { "minecraft-client.jar da 26.3 não encontrado"; exit 0 }
+          "== $($jar.FullName)"
+          $checks = [ordered]@{
+            'net.minecraft.client.gui.screens.ConnectScreen' = 'startConnecting'
+            'net.minecraft.client.gui.screens.PauseScreen' = 'PauseScreen\(|showsPauseMenu'
+            'net.minecraft.client.gui.screens.TitleScreen' = 'TitleScreen\('
+            'net.minecraft.client.gui.screens.Screen' = ' font;| minecraft;|extractRenderState|keyPressed|mouseClicked|children\(|rebuildWidgets|shouldCloseOnEsc'
+            'net.minecraft.client.multiplayer.ServerList' = 'ServerList\(|load\(|size\(|get\('
+            'net.minecraft.client.multiplayer.ServerData' = ' name;| ip;'
+            'net.minecraft.client.gui.screens.options.OptionsScreen' = 'OptionsScreen\('
+            'net.minecraft.client.gui.screens.worldselection.SelectWorldScreen' = 'SelectWorldScreen\('
+            'net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen' = 'JoinMultiplayerScreen\('
+            'net.minecraft.client.input.KeyEvent' = 'KeyEvent\(|key\(\)'
+            'com.mojang.blaze3d.platform.InputConstants' = 'getKey|KEY_ESCAPE|KEY_RETURN'
+            'net.minecraft.client.gui.components.AbstractButton' = 'onPress'
+            'net.minecraft.client.resources.sounds.SimpleSoundInstance' = 'forUI'
+            'net.minecraft.client.KeyMapping' = 'setKey|resetMapping|getTranslatedKeyMessage'
+            'net.minecraft.client.Minecraft' = 'getCurrentServer|isLocalServer|hasSingleplayerServer|getSingleplayerServer|getFps|getUser|void stop|getSoundManager| options;'
+          }
+          foreach ($c in $checks.Keys) {
+            "--- $c"
+            $out = javap -p -cp $jar.FullName $c 2>&1
+            if ($LASTEXITCODE -ne 0) { "  (classe não existe)"; continue }
+            $out | Select-String -Pattern $checks[$c] | ForEach-Object { "  " + $_.Line.Trim() }
+          }
 
       - name: Embutir os jars no launcher
         shell: pwsh
@@ -51,7 +85,7 @@ jobs:
           $conf = "launcher/src-tauri/tauri.conf.json"
           (Get-Content $conf -Raw).Replace("SEU_USUARIO/SEU_REPO", "${{ github.repository }}") | Set-Content $conf -NoNewline
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -102,7 +136,7 @@ jobs:
           npx tauri build --no-bundle
           Copy-Item src-tauri/target/release/kairo-setup.exe ../Kairo-Setup.exe
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         with:
           name: Kairo-Launcher-Windows

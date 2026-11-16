@@ -116,6 +116,41 @@ public final class KairoConfig {
 		return parent.has(key) && parent.get(key).isJsonObject() ? parent.getAsJsonObject(key) : new JsonObject();
 	}
 
+	// ---------- interface (tela inicial, ESC, tecla do editor) ----------
+	// "ui": { "customTitle": true, "customPause": true, "hudKey": true, "titleScene": "anoitecer" }
+
+	public static boolean ui(String key, boolean def) {
+		JsonObject u = obj(root, "ui");
+		try {
+			return u.has(key) ? u.get(key).getAsBoolean() : def;
+		} catch (RuntimeException e) {
+			return def;
+		}
+	}
+
+	public static String uiString(String key, String def) {
+		JsonObject u = obj(root, "ui");
+		try {
+			return u.has(key) ? u.get(key).getAsString() : def;
+		} catch (RuntimeException e) {
+			return def;
+		}
+	}
+
+	public static void setUi(String key, boolean value) {
+		JsonObject u = obj(root, "ui");
+		u.addProperty(key, value);
+		root.add("ui", u);
+		save();
+	}
+
+	public static void setUi(String key, String value) {
+		JsonObject u = obj(root, "ui");
+		u.addProperty(key, value);
+		root.add("ui", u);
+		save();
+	}
+
 	// ---------- perfis de HUD ----------
 
 	public static List<String> profileNames() {

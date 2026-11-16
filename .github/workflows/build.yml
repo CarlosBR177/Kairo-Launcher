@@ -37,19 +37,39 @@ jobs:
         working-directory: mod
         run: ./gradlew.bat build --no-daemon
 
-      # TEMPORÁRIO: mostra os métodos da classe nova da 26.3 (para o módulo "Mão"). Pode apagar depois.
-      - name: Diagnóstico 26.3 (mão em primeira pessoa)
+      # TEMPORÁRIO: mostra as assinaturas da 26.3 usadas pelas telas do Kairo (roda mesmo se o build falhar)
+      - name: Diagnóstico 26.3
+        if: always()
         continue-on-error: true
         shell: pwsh
         run: |
-          $cls = 'net.minecraft.client.renderer.FirstPersonHandsAndItemsRenderer'
-          $jars = Get-ChildItem -Recurse -Filter *.jar -ErrorAction SilentlyContinue "$env:USERPROFILE/.gradle/caches/fabric-loom", "mod/.gradle" |
-            Where-Object { $_.FullName -match '26\.3' -and $_.Name -match 'minecraft' }
-          foreach ($j in $jars) {
-            $out = javap -p -cp $j.FullName $cls 2>$null
-            if ($LASTEXITCODE -eq 0) { "== $($j.FullName)"; $out; break }
+          $jar = Get-ChildItem -Recurse -Filter minecraft-client.jar -ErrorAction SilentlyContinue "$env:USERPROFILE/.gradle/caches/fabric-loom" |
+            Where-Object { $_.FullName -match '26\.3' } | Select-Object -First 1
+          if (-not $jar) { "minecraft-client.jar da 26.3 não encontrado"; exit 0 }
+          "== $($jar.FullName)"
+          $checks = [ordered]@{
+            'net.minecraft.client.gui.screens.ConnectScreen' = 'startConnecting'
+            'net.minecraft.client.gui.screens.PauseScreen' = 'PauseScreen\(|showsPauseMenu'
+            'net.minecraft.client.gui.screens.TitleScreen' = 'TitleScreen\('
+            'net.minecraft.client.gui.screens.Screen' = ' font;| minecraft;|extractRenderState|keyPressed|mouseClicked|children\(|rebuildWidgets|shouldCloseOnEsc'
+            'net.minecraft.client.multiplayer.ServerList' = 'ServerList\(|load\(|size\(|get\('
+            'net.minecraft.client.multiplayer.ServerData' = ' name;| ip;'
+            'net.minecraft.client.gui.screens.options.OptionsScreen' = 'OptionsScreen\('
+            'net.minecraft.client.gui.screens.worldselection.SelectWorldScreen' = 'SelectWorldScreen\('
+            'net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen' = 'JoinMultiplayerScreen\('
+            'net.minecraft.client.input.KeyEvent' = 'KeyEvent\(|key\(\)'
+            'com.mojang.blaze3d.platform.InputConstants' = 'getKey|KEY_ESCAPE|KEY_RETURN'
+            'net.minecraft.client.gui.components.AbstractButton' = 'onPress'
+            'net.minecraft.client.resources.sounds.SimpleSoundInstance' = 'forUI'
+            'net.minecraft.client.KeyMapping' = 'setKey|resetMapping|getTranslatedKeyMessage'
+            'net.minecraft.client.Minecraft' = 'getCurrentServer|isLocalServer|hasSingleplayerServer|getSingleplayerServer|getFps|getUser|void stop|getSoundManager| options;'
           }
-          if (-not $out) { "Classe não encontrada. Jars vistos:"; $jars | ForEach-Object FullName }
+          foreach ($c in $checks.Keys) {
+            "--- $c"
+            $out = javap -p -cp $jar.FullName $c 2>&1
+            if ($LASTEXITCODE -ne 0) { "  (classe não existe)"; continue }
+            $out | Select-String -Pattern $checks[$c] | ForEach-Object { "  " + $_.Line.Trim() }
+          }
 
       - name: Embutir os jars no launcher
         shell: pwsh

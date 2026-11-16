@@ -94,6 +94,24 @@ public final class Gfx {
 		*///?}
 	}
 
+	/** Gira em graus (sentido horário positivo), em torno da origem atual. */
+	public void rotate(float degrees) {
+		//? if >=1.21.6 {
+		raw.pose().rotate((float) Math.toRadians(degrees));
+		//?} else {
+		/*raw.pose().mulPose(com.mojang.math.Axis.ZP.rotationDegrees(degrees));
+		*///?}
+	}
+
+	/** Texto em escala (o texto do jogo tem 9 px de altura na escala 1). */
+	public void textScaled(Font font, String s, float x, float y, float scale, int color, boolean shadow) {
+		push();
+		translate(x, y);
+		scale(scale);
+		text(font, s, 0, 0, color, shadow);
+		pop();
+	}
+
 	/** Contorno de 1 px (feito com fill, igual em todas as versões). */
 	public void outline(int x, int y, int w, int h, int color) {
 		fill(x, y, x + w, y + 1, color);

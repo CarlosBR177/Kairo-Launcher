@@ -1,5 +1,6 @@
 package gg.kairo.gui;
 
+import gg.kairo.KairoClient;
 import gg.kairo.config.KairoConfig;
 import gg.kairo.module.Module;
 import gg.kairo.module.ModuleManager;
@@ -41,7 +42,7 @@ public final class KairoMenuScreen extends Screen {
 		int rows = (modules.size() + cols - 1) / cols;
 		int gridW = cols * BTN_W + (cols - 1) * GAP;
 		int left = (this.width - gridW) / 2;
-		int top = Math.max(44, (this.height - rows * (BTN_H + GAP) - 56) / 2 + 22);
+		int top = Math.max(44, (this.height - rows * (BTN_H + GAP) - 80) / 2 + 22);
 
 		for (int i = 0; i < modules.size(); i++) {
 			Module m = modules.get(i);
@@ -57,21 +58,34 @@ public final class KairoMenuScreen extends Screen {
 		}
 
 		int footerY = top + rows * (BTN_H + GAP) + 8;
-		int third = (gridW - 2 * GAP) / 3;
-		this.addRenderableWidget(Button.builder(Component.literal("✥ Editar HUD (H)"),
+		int half = (gridW - GAP) / 2;
+		int footerY2 = footerY + BTN_H + GAP;
+		String hudKey = KairoConfig.ui("hudKey", true)
+				? " (" + KairoClient.keyHudEditor.getTranslatedKeyMessage().getString() + ")" : "";
+		Button hudBtn = Button.builder(Component.literal("✥ Editar HUD" + hudKey),
 				btn -> Compat.setScreen(new HudEditorScreen(this)))
-				.bounds(left, footerY, third, BTN_H).build());
+				.bounds(left, footerY, half, BTN_H)
+				.tooltip(Tooltip.create(Component.literal(this.minecraft.player == null
+						? "Entre num mundo para editar a HUD." : "Mover e redimensionar os elementos da HUD.")))
+				.build();
+		hudBtn.active = this.minecraft.player != null;
+		this.addRenderableWidget(hudBtn);
 		this.addRenderableWidget(Button.builder(profileLabel(), btn -> {
 			List<String> names = KairoConfig.profileNames();
 			if (names.isEmpty()) return;
 			int idx = names.indexOf(KairoConfig.activeProfile());
 			KairoConfig.applyProfile(names.get((idx + 1) % names.size()));
 			this.rebuildWidgets();
-		}).bounds(left + third + GAP, footerY, third, BTN_H)
+		}).bounds(left + half + GAP, footerY, gridW - half - GAP, BTN_H)
 				.tooltip(Tooltip.create(Component.literal("Perfis são criados na aba Client do launcher.")))
 				.build());
+		this.addRenderableWidget(Button.builder(Component.literal("Interface…"),
+				btn -> Compat.setScreen(new KairoSettingsScreen(this)))
+				.bounds(left, footerY2, half, BTN_H)
+				.tooltip(Tooltip.create(Component.literal("Tela inicial, menu do ESC e tecla do editor de HUD.")))
+				.build());
 		this.addRenderableWidget(Button.builder(Component.literal("Concluir"), btn -> this.onClose())
-				.bounds(left + 2 * (third + GAP), footerY, gridW - 2 * (third + GAP), BTN_H).build());
+				.bounds(left + half + GAP, footerY2, gridW - half - GAP, BTN_H).build());
 	}
 
 	private static Component profileLabel() {
