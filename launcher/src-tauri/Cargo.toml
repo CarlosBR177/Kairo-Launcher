@@ -1,6 +1,6 @@
 [package]
 name = "kairo-launcher"
-version = "0.1.4"
+version = "0.1.5"
 description = "Kairo Launcher"
 authors = ["Carlos"]
 edition = "2021"

@@ -283,3 +283,59 @@ mod tests {
         assert_eq!(cfg["serverRules"][0]["modules"].as_array().unwrap().len(), 1);
     }
 }
+
+/// Tela de carregamento do Kairo: liga uma única vez a opção "Fundo monocromático"
+/// (`darkMojangStudiosBackground`) no options.txt, para o logo do Kairo aparecer no fundo
+/// escuro em vez do vermelho da Mojang. Se o jogador desligar depois, respeitamos.
+pub fn ensure_dark_loading(game_dir: &std::path::Path) -> std::io::Result<()> {
+    let marker = game_dir.join(".kairo-dark-loading");
+    if marker.exists() {
+        return Ok(());
+    }
+    let path = game_dir.join("options.txt");
+    let text = std::fs::read_to_string(&path).unwrap_or_default();
+    let mut found = false;
+    let mut lines: Vec<String> = text
+        .lines()
+        .map(|l| {
+            if l.starts_with("darkMojangStudiosBackground:") {
+                found = true;
+                "darkMojangStudiosBackground:true".to_string()
+            } else {
+                l.to_string()
+            }
+        })
+        .collect();
+    if !found {
+        lines.push("darkMojangStudiosBackground:true".to_string());
+    }
+    std::fs::create_dir_all(game_dir)?;
+    std::fs::write(&path, lines.join("\n") + "\n")?;
+    std::fs::write(&marker, "1")
+}
+
+#[cfg(test)]
+mod dark_loading_tests {
+    use super::ensure_dark_loading;
+
+    #[test]
+    fn liga_uma_vez_e_preserva_o_resto() {
+        let d = std::env::temp_dir().join(format!("kairo-dark-{}", std::process::id()));
+        std::fs::create_dir_all(&d).unwrap();
+        std::fs::write(d.join("options.txt"), "version:3955\ndarkMojangStudiosBackground:false\nfov:0.5\n").unwrap();
+        ensure_dark_loading(&d).unwrap();
+        let t = std::fs::read_to_string(d.join("options.txt")).unwrap();
+        assert!(t.contains("darkMojangStudiosBackground:true") && t.contains("fov:0.5") && t.contains("version:3955"));
+        // o jogador desligou depois: não liga de novo
+        std::fs::write(d.join("options.txt"), "darkMojangStudiosBackground:false\n").unwrap();
+        ensure_dark_loading(&d).unwrap();
+        assert!(std::fs::read_to_string(d.join("options.txt")).unwrap().contains(":false"));
+        std::fs::remove_dir_all(&d).unwrap();
+
+        // instância nova, sem options.txt
+        let n = std::env::temp_dir().join(format!("kairo-dark-new-{}", std::process::id()));
+        ensure_dark_loading(&n).unwrap();
+        assert_eq!(std::fs::read_to_string(n.join("options.txt")).unwrap(), "darkMojangStudiosBackground:true\n");
+        std::fs::remove_dir_all(&n).unwrap();
+    }
+}

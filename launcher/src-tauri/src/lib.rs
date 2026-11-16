@@ -311,12 +311,8 @@ fn select_account(state: State<'_, AppState>, uuid: String) -> CmdResult<()> {
 /// O jar embutido no instalador para essa versão do jogo: kairo-client-<mod>+<mc>.jar.
 fn bundled_mod(app: &AppHandle, game_version: &str) -> Option<PathBuf> {
     let target = kairo_jar_for(game_version)?;
-    let suffix = format!("+{target}.jar");
     let dir = app.path().resolve("resources", BaseDirectory::Resource).ok()?;
-    std::fs::read_dir(dir).ok()?.flatten().map(|e| e.path()).find(|p| {
-        let n = p.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
-        n.starts_with("kairo-client") && n.ends_with(&suffix) && !n.contains("sources")
-    })
+    mods::newest_bundled(&dir, target)
 }
 
 #[tauri::command]
@@ -407,7 +403,12 @@ async fn run_game(app: AppHandle, instance: Instance, server: Option<String>) ->
     if instance.loader.is_some() {
         let mods_dir = paths.mods(&instance.id);
         match bundled_mod(&app, &instance.game_version) {
-            Some(jar) => mods::sync_builtin(&mods_dir, &jar)?,
+            Some(jar) => {
+                mods::sync_builtin(&mods_dir, &jar)?;
+                kairo_log(&app, &id, format!("[Kairo] Kairo Client: {}", jar.file_name().unwrap_or_default().to_string_lossy()));
+                // fundo escuro na tela de carregamento (o logo do Kairo vem do mod)
+                let _ = client_config::ensure_dark_loading(&game_dir);
+            }
             None => mods::remove_builtin(&mods_dir),
         }
         let marker = game_dir.join(".kairo-setup");

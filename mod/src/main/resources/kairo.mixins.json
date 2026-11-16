@@ -12,6 +12,7 @@
     "MouseHandlerMixin",
     "OptionInstanceAccessor",
     "ScreenEffectRendererMixin",
+    "VanillaPackResourcesMixin",
     "WindowTitleMixin"
   ],
   "injectors": {

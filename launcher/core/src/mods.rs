@@ -285,6 +285,32 @@ pub fn remove_builtin(mods_dir: &Path) {
     }
 }
 
+/// O jar mais novo do Kairo Client para `target` (ex.: "1.21.11") numa pasta com
+/// `kairo-client-<versão>+<mc>.jar`. O instalador NSIS não apaga os jars de versões
+/// anteriores, então a pasta acumula 0.1.0, 0.1.2, 0.1.4… — antes pegávamos o primeiro
+/// em ordem alfabética, que era o MAIS ANTIGO.
+pub fn newest_bundled(dir: &Path, target: &str) -> Option<std::path::PathBuf> {
+    let suffix = format!("+{target}.jar");
+    std::fs::read_dir(dir)
+        .ok()?
+        .flatten()
+        .filter_map(|e| {
+            let name = e.file_name().to_string_lossy().to_string();
+            let ver = name.strip_prefix("kairo-client-")?.strip_suffix(&suffix)?;
+            if name.contains("sources") || name.contains("-dev") {
+                return None;
+            }
+            Some((version_key(ver), e.path()))
+        })
+        .max_by(|a, b| a.0.cmp(&b.0))
+        .map(|(_, p)| p)
+}
+
+/// "0.1.10" → [0, 1, 10] para comparar números (e não texto).
+fn version_key(v: &str) -> Vec<u64> {
+    v.split(|c: char| !c.is_ascii_digit()).filter(|s| !s.is_empty()).map(|s| s.parse().unwrap_or(0)).collect()
+}
+
 /// Copia o .jar do mod do Kairo (empacotado no instalador) para a instância.
 pub fn sync_builtin(mods_dir: &Path, bundled_jar: &Path) -> Result<()> {
     std::fs::create_dir_all(mods_dir)?;
@@ -296,4 +322,30 @@ pub fn sync_builtin(mods_dir: &Path, bundled_jar: &Path) -> Result<()> {
         std::fs::copy(bundled_jar, mods_dir.join(name))?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod bundled_tests {
+    use super::*;
+
+    #[test]
+    fn pega_o_jar_mais_novo() {
+        let d = std::env::temp_dir().join(format!("kairo-bundled-{}", std::process::id()));
+        std::fs::create_dir_all(&d).unwrap();
+        for n in [
+            "kairo-client-0.1.0+1.21.11.jar",
+            "kairo-client-0.1.10+1.21.11.jar",
+            "kairo-client-0.1.4+1.21.11.jar",
+            "kairo-client-0.1.4+1.21.1.jar",
+            "kairo-client-0.1.12+1.21.11-sources.jar",
+        ] {
+            std::fs::write(d.join(n), b"").unwrap();
+        }
+        let a = newest_bundled(&d, "1.21.11").unwrap();
+        assert!(a.ends_with("kairo-client-0.1.10+1.21.11.jar"), "{a:?}");
+        let b = newest_bundled(&d, "1.21.1").unwrap();
+        assert!(b.ends_with("kairo-client-0.1.4+1.21.1.jar"), "{b:?}");
+        assert!(newest_bundled(&d, "26.3").is_none());
+        std::fs::remove_dir_all(&d).unwrap();
+    }
 }
