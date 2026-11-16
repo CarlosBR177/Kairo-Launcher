@@ -22,10 +22,10 @@ jobs:
   windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Java 21 e 25 (1.21.x e 26.x)
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: |
@@ -36,6 +36,20 @@ jobs:
       - name: Compilar o mod Kairo Client (todas as versões)
         working-directory: mod
         run: ./gradlew.bat build --no-daemon
+
+      # TEMPORÁRIO: mostra os métodos da classe nova da 26.3 (para o módulo "Mão"). Pode apagar depois.
+      - name: Diagnóstico 26.3 (mão em primeira pessoa)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $cls = 'net.minecraft.client.renderer.FirstPersonHandsAndItemsRenderer'
+          $jars = Get-ChildItem -Recurse -Filter *.jar -ErrorAction SilentlyContinue "$env:USERPROFILE/.gradle/caches/fabric-loom", "mod/.gradle" |
+            Where-Object { $_.FullName -match '26\.3' -and $_.Name -match 'minecraft' }
+          foreach ($j in $jars) {
+            $out = javap -p -cp $j.FullName $cls 2>$null
+            if ($LASTEXITCODE -eq 0) { "== $($j.FullName)"; $out; break }
+          }
+          if (-not $out) { "Classe não encontrada. Jars vistos:"; $jars | ForEach-Object FullName }
 
       - name: Embutir os jars no launcher
         shell: pwsh
@@ -51,7 +65,7 @@ jobs:
           $conf = "launcher/src-tauri/tauri.conf.json"
           (Get-Content $conf -Raw).Replace("SEU_USUARIO/SEU_REPO", "${{ github.repository }}") | Set-Content $conf -NoNewline
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -102,7 +116,7 @@ jobs:
           npx tauri build --no-bundle
           Copy-Item src-tauri/target/release/kairo-setup.exe ../Kairo-Setup.exe
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         with:
           name: Kairo-Launcher-Windows
