@@ -1,0 +1,2 @@
+O build coloca aqui o kairo-client-*.jar (mod do client).
+O launcher copia esse arquivo para a pasta mods de cada instância Fabric.

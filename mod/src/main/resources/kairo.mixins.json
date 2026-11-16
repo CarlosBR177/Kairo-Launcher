@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "package": "gg.kairo.mixin",
+  "compatibilityLevel": "${java_level}",
+  "client": [
+    "CameraMixin",
+    "EntityMixin",
+    "GameRendererMixin",
+    "GuiMixin",
+    "ItemInHandRendererMixin",
+    "LocalPlayerMixin",
+    "MouseHandlerMixin",
+    "OptionInstanceAccessor",
+    "ScreenEffectRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
