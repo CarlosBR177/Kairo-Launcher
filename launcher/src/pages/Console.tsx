@@ -2,23 +2,25 @@ import { Copy, Eraser } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "../store";
 
-function level(line: string): "error" | "warn" | "info" {
-  if (/ERROR|FATAL|Exception|Caused by/.test(line)) return "error";
+function level(line: string): "error" | "warn" | "info" | "kairo" {
+  if (/ERROR|ERRO:|FATAL|Exception|Caused by|^Error:|^\s+at /.test(line)) return "error";
   if (/WARN/.test(line)) return "warn";
+  if (line.startsWith("[Kairo]")) return "kairo";
   return "info";
 }
 
 export function Console() {
-  const { logs, clearLogs, instances, selected, toast } = useStore();
+  const { logs, clearLogs, instances, toast } = useStore();
   const [only, setOnly] = useState<"all" | "warn" | "error">("all");
-  const [instance, setInstance] = useState<string>(selected?.id ?? "");
+  // padrão: todas — antes filtrava pela instância selecionada e escondia o log de quem estava rodando
+  const [instance, setInstance] = useState<string>("");
   const [follow, setFollow] = useState(true);
   const box = useRef<HTMLDivElement>(null);
 
   const lines = useMemo(() => logs.filter((l) => {
     if (instance && l.instance !== instance) return false;
     const lv = level(l.line);
-    return only === "all" || (only === "warn" ? lv !== "info" : lv === "error");
+    return only === "all" || (only === "warn" ? lv === "warn" || lv === "error" : lv === "error");
   }), [logs, only, instance]);
 
   useEffect(() => {

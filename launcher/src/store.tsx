@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { checkForUpdate } from "./updater";
+import { checkForUpdate, showWhatsNew } from "./updater";
 import { api, on, type AccountView, type Bootstrap, type GameState, type Instance, type Progress, type Settings } from "./api";
 
 export type Page = "home" | "mods" | "client" | "instances" | "console" | "settings";
@@ -72,7 +72,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setSelectedId(b.selected ?? b.instances[0]?.id ?? null);
       setAccountList(b.accounts);
       setActiveId(b.active_account);
-      if (b.settings.check_updates) setTimeout(() => checkForUpdate(toast), 2500);
+      // depois da abertura animada: primeiro "novidades" (se acabou de atualizar), depois procura versão nova
+      setTimeout(() => {
+        showWhatsNew(b.version).finally(() => {
+          if (b.settings.check_updates) checkForUpdate(toast);
+        });
+      }, 2400);
     }).catch((e) => toast(String(e), "error"));
   }, [toast]);
 

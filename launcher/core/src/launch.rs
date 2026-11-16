@@ -161,7 +161,7 @@ pub fn build_command(paths: &Paths, installed: &Installed, opts: &LaunchOptions)
         game.extend(["--server".into(), host.into(), "--port".into(), port.into()]);
     }
 
-    let java = opts.java_override.clone().unwrap_or_else(|| installed.java.clone());
+    let java = console_java(opts.java_override.clone().unwrap_or_else(|| installed.java.clone()));
     let mut cmd = Command::new(java);
     cmd.args(&jvm)
         .arg(&installed.version.main_class)
@@ -176,6 +176,41 @@ pub fn build_command(paths: &Paths, installed: &Installed, opts: &LaunchOptions)
         cmd.creation_flags(0x0800_0000);
     }
     cmd
+}
+
+/// `javaw.exe` não escreve no stderr (mostra erros numa caixa de diálogo).
+/// Se existir um `java.exe` ao lado, usa ele para os logs chegarem à aba Console.
+fn console_java(java: std::path::PathBuf) -> std::path::PathBuf {
+    let is_javaw = java.file_name().map(|n| n.to_string_lossy().eq_ignore_ascii_case("javaw.exe")).unwrap_or(false);
+    if is_javaw {
+        let alt = java.with_file_name("java.exe");
+        if alt.exists() {
+            return alt;
+        }
+    }
+    java
+}
+
+/// Comando completo em uma linha (para mostrar na aba Console), sem o token da conta.
+pub fn describe_command(cmd: &Command) -> String {
+    let std = cmd.as_std();
+    let mut hide_next = false;
+    let mut out = vec![std.get_program().to_string_lossy().into_owned()];
+    for a in std.get_args() {
+        let a = a.to_string_lossy();
+        if hide_next {
+            out.push("********".into());
+            hide_next = false;
+            continue;
+        }
+        hide_next = a == "--accessToken";
+        if a.len() > 300 {
+            out.push(format!("{}… ({} caracteres)", &a[..a.char_indices().nth(120).map(|(i, _)| i).unwrap_or(a.len())], a.len()));
+        } else {
+            out.push(a.into_owned());
+        }
+    }
+    out.join(" ")
 }
 
 #[cfg(test)]

@@ -98,6 +98,11 @@ struct GameLog {
     line: String,
 }
 
+/// Linha do próprio launcher na aba Console (etapas, comando, erros).
+fn kairo_log(app: &AppHandle, instance_id: &str, line: impl Into<String>) {
+    let _ = app.emit("game-log", GameLog { instance_id: instance_id.to_string(), line: line.into() });
+}
+
 #[derive(Serialize)]
 struct VersionInfo {
     id: String,
@@ -338,6 +343,7 @@ async fn launch(app: AppHandle, state: State<'_, AppState>, instance_id: String,
     tauri::async_runtime::spawn(async move {
         let id = instance.id.clone();
         if let Err(e) = run_game(app2.clone(), instance, server).await {
+            kairo_log(&app2, &id, format!("[Kairo] ERRO: {e}"));
             let _ = app2.emit("game-state", GameState { instance_id: id.clone(), state: "error", message: e.to_string() });
         }
         app2.state::<AppState>().running.lock().unwrap().remove(&id);
@@ -358,9 +364,26 @@ async fn run_game(app: AppHandle, instance: Instance, server: Option<String>) ->
         let _ = app.emit("game-state", GameState { instance_id: id.clone(), state: s, message: m });
     };
     emit_state("installing", String::new());
+    kairo_log(&app, &id, format!(
+        "[Kairo] Preparando {} ({} {})",
+        instance.name,
+        instance.loader.as_deref().map(|_| "Fabric").unwrap_or("Vanilla"),
+        instance.game_version
+    ));
 
     let emitter = app.clone();
+    let log_app = app.clone();
+    let log_id = id.clone();
+    let last_stage = Arc::new(Mutex::new(String::new()));
     let progress: ProgressFn = Arc::new(move |p: Progress| {
+        // cada etapa nova (ex.: "Baixando Java") aparece uma vez na aba Console
+        {
+            let mut last = last_stage.lock().unwrap();
+            if *last != p.message {
+                *last = p.message.clone();
+                kairo_log(&log_app, &log_id, format!("[Kairo] {}", p.message));
+            }
+        }
         let _ = emitter.emit("progress", p);
     });
 
@@ -417,7 +440,9 @@ async fn run_game(app: AppHandle, instance: Instance, server: Option<String>) ->
         quick_play_server: server.clone(),
         java_override: settings.java_path.as_ref().filter(|p| !p.trim().is_empty()).map(PathBuf::from),
     };
-    let mut child = launch::build_command(&paths, &installed, &opts)
+    let mut cmd = launch::build_command(&paths, &installed, &opts);
+    kairo_log(&app, &id, format!("[Kairo] Iniciando: {}", launch::describe_command(&cmd)));
+    let mut child = cmd
         .spawn()
         .map_err(|e| Error::msg(format!("Não consegui iniciar o Java: {e}")))?;
 
@@ -461,9 +486,19 @@ async fn run_game(app: AppHandle, instance: Instance, server: Option<String>) ->
         let app = app.clone();
         let id = instance.id.clone();
         tauri::async_runtime::spawn(async move {
-            let mut lines = BufReader::new(stream).lines();
-            while let Ok(Some(line)) = lines.next_line().await {
-                let _ = app.emit("game-log", GameLog { instance_id: id.clone(), line });
+            // Lê bytes e converte com perda: o Java no Windows escreve em cp1252, e `lines()`
+            // parava de vez no primeiro acento (UTF-8 inválido) — por isso o Console ficava vazio.
+            let mut reader = BufReader::new(stream);
+            let mut buf = Vec::new();
+            loop {
+                buf.clear();
+                match reader.read_until(b'\n', &mut buf).await {
+                    Ok(0) | Err(_) => break,
+                    Ok(_) => {
+                        let line = String::from_utf8_lossy(&buf).trim_end_matches(['\r', '\n']).to_string();
+                        let _ = app.emit("game-log", GameLog { instance_id: id.clone(), line });
+                    }
+                }
             }
         });
     }
@@ -476,6 +511,10 @@ async fn run_game(app: AppHandle, instance: Instance, server: Option<String>) ->
             child.wait().await?
         }
     };
+    kairo_log(&app, &id, match status.code() {
+        Some(c) => format!("[Kairo] O jogo fechou (código {c}) depois de {} s", started.elapsed().as_secs()),
+        None => "[Kairo] O jogo foi encerrado".to_string(),
+    });
 
     if settings.discord_rpc {
         discord::clear();

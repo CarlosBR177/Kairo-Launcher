@@ -60,10 +60,16 @@ fn platform() -> &'static str {
     }
 }
 
+/// Marca de runtime completo. O "-v2" força a reinstalação dos runtimes baixados
+/// antes da correção dos arquivos temporários (ver `http::temp_path`).
+const MARKER: &str = ".kairo-installed-v2";
+
 /// Caminho do executável Java dentro de uma pasta de runtime.
+/// No Windows usamos `java.exe` (e não `javaw.exe`): com CREATE_NO_WINDOW não aparece console,
+/// e os erros da JVM vão para o stderr (aba Console) em vez de virar uma caixa de diálogo.
 pub fn java_executable(dir: &std::path::Path) -> PathBuf {
     match std::env::consts::OS {
-        "windows" => dir.join("bin").join("javaw.exe"),
+        "windows" => dir.join("bin").join("java.exe"),
         "macos" => dir.join("jre.bundle/Contents/Home/bin/java"),
         _ => dir.join("bin").join("java"),
     }
@@ -72,10 +78,16 @@ pub fn java_executable(dir: &std::path::Path) -> PathBuf {
 /// Garante que o runtime `component` (ex.: "java-runtime-epsilon") está instalado.
 pub async fn ensure_runtime(paths: &Paths, component: &str, progress: &ProgressFn) -> Result<PathBuf> {
     let dir = paths.runtime().join(component);
-    let marker = dir.join(".kairo-installed");
+    let marker = dir.join(MARKER);
     let exe = java_executable(&dir);
     if marker.exists() && exe.exists() {
         return Ok(exe);
+    }
+    // Runtime baixado por versões antigas do launcher (antes da correção do `.part`):
+    // pode ter arquivos misturados (ex.: jvm.cfg corrompido). Apaga e baixa limpo.
+    if dir.join(".kairo-installed").exists() && !marker.exists() {
+        report(progress, "java", format!("Reparando o Java ({component})"), 0, 1);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     report(progress, "java", format!("Preparando Java ({component})"), 0, 1);

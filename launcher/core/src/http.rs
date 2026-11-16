@@ -56,11 +56,23 @@ fn is_valid(job: &Job) -> bool {
     }
 }
 
+/// Arquivo temporário exclusivo deste download.
+/// Antes era `with_extension("part")`, e arquivos com o mesmo nome-base na mesma pasta
+/// (ex.: `bin/java.exe` e `bin/java.dll`, `lib/jvm.cfg` e `lib/jvm.lib`, `1.21.1.jar` e `1.21.1.json`)
+/// escreviam no MESMO `.part` em paralelo — o hash passava (é calculado na memória), mas o arquivo
+/// final saía misturado. Foi isso que corrompeu o `jvm.cfg` do Java.
+fn temp_path(path: &Path) -> PathBuf {
+    static SEQ: AtomicU64 = AtomicU64::new(0);
+    let n = SEQ.fetch_add(1, Ordering::Relaxed);
+    let name = path.file_name().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+    path.with_file_name(format!("{name}.{}-{n}.part", std::process::id()))
+}
+
 async fn download_once(job: &Job) -> Result<()> {
     if let Some(parent) = job.path.parent() {
         tokio::fs::create_dir_all(parent).await?;
     }
-    let tmp = job.path.with_extension("part");
+    let tmp = temp_path(&job.path);
     let mut resp = client().get(&job.url).send().await?.error_for_status()?;
     let mut file = tokio::fs::File::create(&tmp).await?;
     let mut hasher = Sha1::new();
@@ -132,5 +144,22 @@ where
     match first_err {
         Some(e) => Err(e),
         None => Ok(()),
+    }
+}
+
+#[cfg(test)]
+mod tmp_tests {
+    use super::*;
+
+    /// `java.exe` e `java.dll` (mesmo nome-base) não podem dividir o arquivo temporário.
+    #[test]
+    fn temporarios_nao_colidem() {
+        let a = temp_path(Path::new("bin/java.exe"));
+        let b = temp_path(Path::new("bin/java.dll"));
+        let c = temp_path(Path::new("bin/java.exe"));
+        assert_ne!(a, b);
+        assert_ne!(a, c);
+        assert!(a.to_string_lossy().contains("java.exe."));
+        assert_eq!(a.parent(), Some(Path::new("bin")));
     }
 }

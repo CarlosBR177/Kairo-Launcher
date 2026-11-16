@@ -1,6 +1,6 @@
 [package]
 name = "kairo-setup"
-version = "0.1.2"
+version = "0.1.3"
 description = "Instalador do Kairo Launcher"
 authors = ["Carlos"]
 edition = "2021"
