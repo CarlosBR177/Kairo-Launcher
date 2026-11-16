@@ -63,13 +63,13 @@ public final class KairoClient implements ClientModInitializer {
 		/*String category = "key.category.kairo.main";
 		*///?}
 		keyMenu = Compat.registerKey(new KeyMapping(
-				"key.kairo.menu", InputConstants.Type.KEYSYM, InputConstants.KEY_RSHIFT, category));
+				"key.kairo.menu", Compat.KEY_TYPE, InputConstants.KEY_RSHIFT, category));
 		keyFreelook = Compat.registerKey(new KeyMapping(
-				"key.kairo.freelook", InputConstants.Type.KEYSYM, InputConstants.KEY_LALT, category));
+				"key.kairo.freelook", Compat.KEY_TYPE, InputConstants.KEY_LALT, category));
 		keyZoom = Compat.registerKey(new KeyMapping(
-				"key.kairo.zoom", InputConstants.Type.KEYSYM, InputConstants.KEY_C, category));
+				"key.kairo.zoom", Compat.KEY_TYPE, InputConstants.KEY_C, category));
 		keyHudEditor = Compat.registerKey(new KeyMapping(
-				"key.kairo.hud_editor", InputConstants.Type.KEYSYM, InputConstants.KEY_H, category));
+				"key.kairo.hud_editor", Compat.KEY_TYPE, InputConstants.KEY_H, category));
 
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
 			while (keyMenu.consumeClick()) {
@@ -94,7 +94,7 @@ public final class KairoClient implements ClientModInitializer {
 		HudElementRegistry.replaceElement(VanillaHudElements.CROSSHAIR, vanilla -> (g, delta) -> {
 			Minecraft mc = Minecraft.getInstance();
 			if (ModuleManager.get("crosshair") instanceof CrosshairModule c && c.enabled) {
-				if (!mc.options.hideGui) c.render(new Gfx(g), mc);
+				if (!Compat.hudHidden(mc)) c.render(new Gfx(g), mc);
 			} else {
 				vanilla.extractRenderState(g, delta);
 			}

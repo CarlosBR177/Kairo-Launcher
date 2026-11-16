@@ -28,8 +28,13 @@ public final class ServerRules {
 		}
 		if (count > 0 && mc.player != null) {
 			KairoClient.LOG.info("{} módulo(s) desligado(s) pelas regras de {}", count, server.ip);
-			mc.player.displayClientMessage(Component.literal("§d[Kairo] §7" + count
+			//? if >=26.1 {
+			mc.player.sendSystemMessage(Component.literal("§d[Kairo] §7" + count
+					+ (count == 1 ? " módulo desligado" : " módulos desligados") + " neste servidor: §f" + String.join(", ", ids)));
+			//?} else {
+			/*mc.player.displayClientMessage(Component.literal("§d[Kairo] §7" + count
 					+ (count == 1 ? " módulo desligado" : " módulos desligados") + " neste servidor: §f" + String.join(", ", ids)), false);
+			*///?}
 		}
 	}
 

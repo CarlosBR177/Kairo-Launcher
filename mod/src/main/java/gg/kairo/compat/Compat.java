@@ -1,5 +1,6 @@
 package gg.kairo.compat;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -33,6 +34,23 @@ public final class Compat {
 		return KeyMappingHelper.registerKeyMapping(key);
 		//?} else {
 		/*return KeyBindingHelper.registerKeyBinding(key);
+		*///?}
+	}
+
+	/** Tipo de tecla do teclado. Na 26.3 o jogo trocou GLFW por SDL e KEYSYM virou KEYBOARD. */
+	public static final InputConstants.Type KEY_TYPE =
+	//? if >=26.3 {
+		InputConstants.Type.KEYBOARD;
+	//?} else {
+	/*InputConstants.Type.KEYSYM;
+	*///?}
+
+	/** HUD escondida (F1). Na 26.2 Options#hideGui passou para Hud#isHidden. */
+	public static boolean hudHidden(Minecraft mc) {
+		//? if >=26.2 {
+		return mc.gui.hud.isHidden();
+		//?} else {
+		/*return mc.options.hideGui;
 		*///?}
 	}
 }

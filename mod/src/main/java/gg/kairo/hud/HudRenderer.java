@@ -1,5 +1,6 @@
 package gg.kairo.hud;
 
+import gg.kairo.compat.Compat;
 import gg.kairo.compat.Gfx;
 import gg.kairo.module.HudModule;
 import gg.kairo.module.ModuleManager;
@@ -13,7 +14,7 @@ public final class HudRenderer {
 	public static void render(Gfx g) {
 		Minecraft mc = Minecraft.getInstance();
 		FrameStats.frame(mc);
-		if (mc.options.hideGui) return;
+		if (Compat.hudHidden(mc)) return;
 
 		int sw = mc.getWindow().getGuiScaledWidth();
 		int sh = mc.getWindow().getGuiScaledHeight();

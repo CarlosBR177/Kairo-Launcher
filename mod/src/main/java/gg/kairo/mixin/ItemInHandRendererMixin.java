@@ -1,6 +1,19 @@
 package gg.kairo.mixin;
 
-import com.llamalad7.mixinextras.sugar.Local;
+//? if >=26.3 {
+import net.minecraft.client.renderer.GameRenderer;
+import org.spongepowered.asm.mixin.Mixin;
+
+/**
+ * Na 26.3 a Mojang trocou ItemInHandRenderer por FirstPersonHandsAndItemsRenderer
+ * (não é uma troca 1:1). Até mapear a nova classe, o módulo "Mão" fica sem efeito
+ * nessa versão; este mixin vazio só mantém a lista do kairo.mixins.json igual em todas.
+ */
+@Mixin(GameRenderer.class)
+public class ItemInHandRendererMixin {
+}
+//?} else {
+/*import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.PoseStack;
 import gg.kairo.module.impl.HandViewModule;
 import net.minecraft.client.renderer.ItemInHandRenderer;
@@ -10,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Item na mão: escala e posição. require = 0 pelo mesmo motivo do fogo baixo. */
+// Item na mão: escala e posição. require = 0 pelo mesmo motivo do fogo baixo.
 @Mixin(ItemInHandRenderer.class)
 public class ItemInHandRendererMixin {
 	@Inject(method = "renderArmWithItem", at = @At("HEAD"), require = 0)
@@ -31,3 +44,4 @@ public class ItemInHandRendererMixin {
 		if (m != null && m.enabled) pose.popPose();
 	}
 }
+*///?}
