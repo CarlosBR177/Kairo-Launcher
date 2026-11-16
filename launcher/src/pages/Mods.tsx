@@ -145,11 +145,16 @@ function Browse({ instanceId, installedIds, onInstalled }: { instanceId: string;
       </div>
 
       <div className="hit-grid">
-        {hits.map((h) => {
+        {loading && hits.length === 0 && Array.from({ length: 6 }, (_, i) => (
+          <article key={`sk${i}`} className="hit skeleton" style={{ animationDelay: `${i * 0.08}s` }}>
+            <div className="sk-icon" /><div className="hit-text"><i /><i /><i /></div>
+          </article>
+        ))}
+        {hits.map((h, idx) => {
           const state = installing[h.project_id];
           const already = installedIds.has(h.slug) || state === "done";
           return (
-            <article key={h.project_id} className="hit">
+            <article key={h.project_id} className="hit hit-in" style={{ animationDelay: `${Math.min(idx % 20, 12) * 0.03}s` }}>
               {h.icon_url ? <img src={h.icon_url} alt="" loading="lazy" /> : <div className="mod-icon">{h.title.slice(0, 1)}</div>}
               <div className="hit-text">
                 <b>{h.title}</b>

@@ -1,6 +1,7 @@
-import { Minus, Square, X } from "lucide-react";
+import { ArrowDownCircle, Minus, Square, X } from "lucide-react";
 import { isTauri } from "../api";
 import { useStore } from "../store";
+import { openUpdate, useUpdate } from "../updater";
 import { Avatar } from "./Avatar";
 
 async function win() {
@@ -10,6 +11,8 @@ async function win() {
 
 export function TitleBar() {
   const { activeAccount, setAccountsOpen } = useStore();
+  const upd = useUpdate();
+  const hasUpdate = !upd.open && upd.phase !== "idle" && upd.phase !== "checking";
   return (
     <header className="titlebar" data-tauri-drag-region>
       <div className="brand" data-tauri-drag-region>
@@ -17,6 +20,11 @@ export function TitleBar() {
         <span data-tauri-drag-region>KAIRO</span>
       </div>
       <div className="titlebar-right">
+        {hasUpdate && (
+          <button className="update-pill" onClick={openUpdate} title="Ver a atualização">
+            <ArrowDownCircle size={14} /> Atualização {upd.version}
+          </button>
+        )}
         <button className="account-chip" onClick={() => setAccountsOpen(true)}>
           {activeAccount ? (
             <>

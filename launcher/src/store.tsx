@@ -72,7 +72,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setSelectedId(b.selected ?? b.instances[0]?.id ?? null);
       setAccountList(b.accounts);
       setActiveId(b.active_account);
-      if (b.settings.check_updates) setTimeout(() => checkForUpdate(toast), 4000);
+      if (b.settings.check_updates) setTimeout(() => checkForUpdate(toast), 2500);
     }).catch((e) => toast(String(e), "error"));
   }, [toast]);
 

@@ -1,5 +1,5 @@
-import { Download, FolderOpen, MemoryStick, MessageCircle, MonitorPlay, Rocket, Wrench } from "lucide-react";
-import { checkForUpdate } from "../updater";
+import { Download, FolderOpen, Loader2, MemoryStick, MessageCircle, MonitorPlay, Rocket, Wrench } from "lucide-react";
+import { checkForUpdate, useUpdate } from "../updater";
 import { useEffect, useState } from "react";
 import { api, type Settings as S } from "../api";
 import { Toggle } from "../components/Toggle";
@@ -7,6 +7,7 @@ import { useStore } from "../store";
 
 export function Settings() {
   const { settings, saveSettings, boot, toast } = useStore();
+  const upd = useUpdate();
   const [s, setS] = useState<S | null>(settings);
   useEffect(() => setS(settings), [settings]);
   if (!s || !boot) return null;
@@ -87,12 +88,12 @@ export function Settings() {
           <Toggle on={s.discord_rpc} disabled={!boot.discord_available} onChange={(v) => update({ discord_rpc: v })} />
         </div>
         <div className="setting-line">
-          <span><b>Procurar atualizações ao abrir</b><small>Baixa e instala versões novas do launcher (o mod vem junto).</small></span>
+          <span><b>Procurar atualizações ao abrir</b><small>Avisa quando sai uma versão nova do launcher (o mod vem junto). Você escolhe quando instalar.</small></span>
           <Toggle on={s.check_updates} onChange={(v) => update({ check_updates: v })} />
         </div>
         <div className="setting-line">
           <span><b>Versão {boot.version}</b></span>
-          <button className="ghost small" onClick={() => checkForUpdate(toast, true)}><Download size={14} /> Procurar agora</button>
+          <button className="ghost small" disabled={upd.phase === "checking"} onClick={() => checkForUpdate(toast, true)}>{upd.phase === "checking" ? <><Loader2 size={14} className="spin" /> Procurando…</> : <><Download size={14} /> Procurar agora</>}</button>
         </div>
       </section>
 

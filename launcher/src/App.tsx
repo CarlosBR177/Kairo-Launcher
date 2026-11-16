@@ -1,7 +1,9 @@
 import { AccountsModal } from "./components/AccountsModal";
 import { Sidebar } from "./components/Sidebar";
+import { Splash } from "./components/Splash";
 import { TitleBar } from "./components/TitleBar";
 import { Toasts } from "./components/Toasts";
+import { UpdateModal } from "./components/UpdateModal";
 import { Client } from "./pages/Client";
 import { Console } from "./pages/Console";
 import { Home } from "./pages/Home";
@@ -34,7 +36,9 @@ export function App() {
         </main>
       </div>
       {accountsOpen && <AccountsModal />}
+      <UpdateModal />
       <Toasts />
+      <Splash ready={!!boot} />
     </div>
   );
 }
