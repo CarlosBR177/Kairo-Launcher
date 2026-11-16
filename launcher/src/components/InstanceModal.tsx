@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api, type Instance, type VersionInfo } from "../api";
+import { KAIRO_VERSIONS_LABEL, kairoSupports } from "../modules";
 import { useStore } from "../store";
 import { COVERS, Cover, type CoverKey } from "./Cover";
 
@@ -20,12 +21,16 @@ export function InstanceModal({ instance, onClose }: { instance: Instance | null
     if (editing) return;
     api.listVersions(settings?.show_snapshots ?? false).then((v) => {
       setVersions(v);
-      setVersion((cur) => cur || v[0]?.id || "");
+      // padrão: a versão mais nova que tem Kairo Client (a lista vem da mais nova para a mais antiga)
+      setVersion((cur) => cur || v.find((x) => x.fabric && kairoSupports(x.id))?.id || v[0]?.id || "");
     }).catch((e) => toast(String(e), "error"));
   }, [editing, settings?.show_snapshots, toast]);
 
   const selectedInfo = versions.find((v) => v.id === version);
   const fabricAvailable = editing || (selectedInfo?.fabric ?? false);
+  const withKairo = versions.filter((v) => v.fabric && kairoSupports(v.id));
+  const others = versions.filter((v) => !(v.fabric && kairoSupports(v.id)));
+  const hasKairo = kairoSupports(version);
 
   async function submit() {
     setBusy(true);
@@ -66,21 +71,31 @@ export function InstanceModal({ instance, onClose }: { instance: Instance | null
               <label className="field">
                 <span>Versão do Minecraft</span>
                 <select value={version} onChange={(e) => setVersion(e.target.value)}>
-                  {versions.map((v) => (
-                    <option key={v.id} value={v.id}>{v.id}{v.kind !== "release" ? ` (${v.kind})` : ""}</option>
-                  ))}
+                  {withKairo.length > 0 && (
+                    <optgroup label="Com Kairo Client">
+                      {withKairo.map((v) => <option key={v.id} value={v.id}>{v.id} ★ Kairo</option>)}
+                    </optgroup>
+                  )}
+                  <optgroup label="Sem Kairo Client">
+                    {others.map((v) => (
+                      <option key={v.id} value={v.id}>{v.id}{v.kind !== "release" ? ` (${v.kind})` : ""}</option>
+                    ))}
+                  </optgroup>
                 </select>
               </label>
               <div className="field">
                 <span>Loader</span>
                 <div className="segmented">
-                  <button className={fabric && fabricAvailable ? "on" : ""} disabled={!fabricAvailable} onClick={() => setFabric(true)}>Fabric + Kairo</button>
+                  <button className={fabric && fabricAvailable ? "on" : ""} disabled={!fabricAvailable} onClick={() => setFabric(true)}>{hasKairo ? "Fabric + Kairo" : "Fabric"}</button>
                   <button className={!fabric || !fabricAvailable ? "on" : ""} onClick={() => setFabric(false)}>Vanilla</button>
                 </div>
               </div>
             </div>
           )}
           {!editing && !fabricAvailable && version && <p className="hint">O Fabric ainda não suporta {version}; será vanilla.</p>}
+          {!editing && fabricAvailable && version && !hasKairo && (
+            <p className="hint warn">A {version} não tem o Kairo Client (menu, HUD e módulos). Para ter o Kairo, escolha {KAIRO_VERSIONS_LABEL}.</p>
+          )}
 
           <div className="field">
             <span>Capa</span>

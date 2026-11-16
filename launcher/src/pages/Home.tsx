@@ -72,6 +72,11 @@ export function Home() {
               <span><kbd>C</kbd> zoom</span>
             </div>
           )}
+          {!kairoSupports(selected.game_version) && (
+            <p className="keyhints no-kairo">
+              Esta instância ({selected.game_version}) abre sem o Kairo Client. Crie uma instância 1.21.1 ou mais nova para ter o menu, a HUD e os módulos.
+            </p>
+          )}
         </div>
       </section>
 

@@ -11,7 +11,8 @@
     "LocalPlayerMixin",
     "MouseHandlerMixin",
     "OptionInstanceAccessor",
-    "ScreenEffectRendererMixin"
+    "ScreenEffectRendererMixin",
+    "WindowTitleMixin"
   ],
   "injectors": {
     "defaultRequire": 1

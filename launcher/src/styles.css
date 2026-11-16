@@ -159,6 +159,8 @@ select option { background: var(--bg-2); }
 .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .row-3 { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 14px; }
 .hint { color: var(--muted); font-size: 12.5px; margin: 6px 0 0; }
+.hint.warn, .keyhints.no-kairo { color: var(--warn); }
+.keyhints.no-kairo { font-size: 12.5px; }
 .mono { font-family: ui-monospace, Consolas, monospace; user-select: text; }
 
 /* ---------- início ---------- */

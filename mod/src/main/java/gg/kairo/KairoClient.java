@@ -141,6 +141,11 @@ public final class KairoClient implements ClientModInitializer {
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> mc.execute(() -> ServerRules.onJoin(mc)));
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> mc.execute(ServerRules::onLeave));
 
+		// título da janela: o WindowTitleMixin cuida disso; se o método mudou nesta versão, põe na abertura
+		ClientLifecycleEvents.CLIENT_STARTED.register(mc -> {
+			if (!titleMixinActive) mc.getWindow().setTitle(windowTitle("Minecraft " + gameVersion()));
+		});
+
 		ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> {
 			// o gama alto do Brilho máximo nunca vai para o options.txt
 			if (ModuleManager.get("fullbright") instanceof FullbrightModule f) f.restore(mc);
@@ -149,6 +154,15 @@ public final class KairoClient implements ClientModInitializer {
 
 		LOG.info("Kairo Client carregado com {} módulos", ModuleManager.all().size());
 	}
+	/** true quando o WindowTitleMixin aplicou nesta versão do jogo. */
+	public static volatile boolean titleMixinActive;
+
+	/** Troca o "Minecraft" (ou "Minecraft*", de jogo modificado) do título pelo nome do launcher. */
+	public static String windowTitle(String vanilla) {
+		if (vanilla == null || vanilla.isBlank()) return "Kairo Launcher " + gameVersion();
+		return vanilla.replaceFirst("^Minecraft\\*?", "Kairo Launcher");
+	}
+
 	/** Versão do Kairo Client (sem o sufixo +versão-do-jogo). */
 	public static String version() {
 		return modVersion(MOD_ID);
