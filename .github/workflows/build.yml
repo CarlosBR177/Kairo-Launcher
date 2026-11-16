@@ -86,8 +86,8 @@ jobs:
           KAIRO_DISCORD_APP_ID: ${{ secrets.KAIRO_DISCORD_APP_ID }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: |
-            if ($env:TAURI_SIGNING_PRIVATE_KEY) { npx tauri build --config src-tauri/tauri.updater.conf.json }
+                run: |
+          if ($env:TAURI_SIGNING_PRIVATE_KEY) { npx tauri build --config src-tauri/tauri.updater.conf.json }
           else { npx tauri build }
 
       # Kairo Setup: instalador com o visual do Kairo, que roda o NSIS acima em silêncio
