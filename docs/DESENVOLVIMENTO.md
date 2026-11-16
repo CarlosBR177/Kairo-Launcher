@@ -9,6 +9,7 @@ O projeto tem duas partes:
 | `launcher/` | O launcher (interface, contas, instalação, mods, instalador .exe) | Tauri 2 + Rust + React |
 | `launcher/core/` | Núcleo do launcher, sem interface (testável sozinho) | Rust |
 | `mod/` | **Kairo Client**: mod com HUD, CPS, FPS, keystrokes, freelook, zoom… | Fabric · Stonecutter · MC 1.21.1–26.3 |
+| `setup/` | **Kairo Setup**: instalador com o visual do Kairo (roda o instalador NSIS em silêncio) | Tauri 2 + Rust + React |
 | `branding/` | Logo, símbolo e ícone em SVG/PNG | — |
 
 ## Gerar o instalador (jeito fácil: GitHub)
@@ -113,3 +114,21 @@ O workflow troca `SEU_USUARIO/SEU_REPO` no `tauri.conf.json` pelo nome do reposi
 - Opções finas dos módulos (estilo da mira, tamanho do item…) ficam na aba Client do launcher; no jogo, o menu liga/desliga e troca de perfil.
 - Capas, marca do Kairo no tab e nametag própria precisam de um servidor do Kairo e ficaram para depois.
 - As capas e o logo são originais; nenhuma marca da Mojang/Microsoft é usada.
+
+## Kairo Setup (instalador personalizado)
+
+O `Kairo-Setup.exe` é um app Tauri pequeno com as telas do Kairo (boas-vindas, opções, progresso, pronto, erro e atualização). O trabalho de verdade continua com o instalador NSIS do launcher, que vai **embutido** no Setup e é executado em silêncio (`/S /D=<pasta>`). Assim o desinstalador, os atalhos, o registro em *Aplicativos* do Windows e o **auto-update** (que usa o instalador NSIS) continuam iguais.
+
+```powershell
+# 1) gere o instalador NSIS do launcher (npm run tauri build em launcher/)
+# 2) compile o Setup apontando para ele (caminho completo)
+cd setup
+npm install
+set KAIRO_NSIS_PATH=D:\KAIRO PVP\launcher\src-tauri\target\release\bundle\nsis\Kairo Launcher_0.1.0_x64-setup.exe
+npx tauri build --no-bundle      # sai em setup\src-tauri\target\release\kairo-setup.exe
+```
+
+- Só as telas, no navegador: `npm run dev` → http://localhost:1430 (modo demonstração). Para ver uma tela específica: `?screen=options`, `?screen=installing`, `?screen=done`, `?screen=error&fail`, `?update`.
+- Sem `KAIRO_NSIS_PATH` o Setup compila mesmo assim, mas o botão Instalar fica desativado.
+- O workflow faz isso sozinho e anexa o `Kairo-Setup.exe` na Release (o NSIS continua lá para o auto-update).
+- A versão do Setup (`setup/src-tauri/tauri.conf.json`) deve acompanhar a do launcher.

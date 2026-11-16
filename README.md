@@ -37,10 +37,12 @@
 
 ## Instalar
 
-1. Baixe o **`Kairo Launcher_x.y.z_x64-setup.exe`** na página de [Releases](https://github.com/CarlosBR177/Kairo-Launcher/releases/latest).
-2. Abra o instalador. Ele não pede senha de administrador.
+1. Baixe o **`Kairo-Setup.exe`** na página de [Releases](https://github.com/CarlosBR177/Kairo-Launcher/releases/latest).
+2. Abra e clique em **Instalar** — leva só alguns segundos e não pede senha de administrador. Em **Opções de instalação** dá para escolher a pasta e se quer atalho na Área de Trabalho.
 3. Se o Windows mostrar **"O Windows protegeu o computador"**, clique em **Mais informações → Executar assim mesmo**. Isso aparece porque o instalador ainda não tem assinatura digital paga; não é vírus.
-4. Abra o **Kairo Launcher** pelo menu Iniciar.
+4. No final, clique em **Abrir o Kairo**. Depois ele fica no menu Iniciar.
+
+O mesmo `Kairo-Setup.exe` também atualiza uma instalação antiga — seus mundos e contas continuam lá.
 
 Requisitos: Windows 10 ou 11 (64 bits). Não precisa instalar Java — o launcher baixa sozinho.
 
