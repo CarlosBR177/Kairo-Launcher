@@ -8,7 +8,7 @@ use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 use tokio::io::AsyncWriteExt;
 
-pub const USER_AGENT: &str = concat!("KairoLauncher/", env!("CARGO_PKG_VERSION"));
+pub const USER_AGENT: &str = concat!("CarlosBR177/Kairo-Launcher/", env!("CARGO_PKG_VERSION"), " (github.com/CarlosBR177/Kairo-Launcher)");
 
 pub fn client() -> &'static reqwest::Client {
     static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
