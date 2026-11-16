@@ -62,7 +62,7 @@ function specs(opt: (id: string, key: string) => OptionValue | undefined): Recor
       ),
     },
     armor: {
-      w: armorH ? armorN * 48 : 46, h: armorH ? 17 : armorN * 17, def: { rx: 0, ry: 0.62 },
+      w: armorH ? armorN * 48 : 46, h: armorH ? 17 : armorN * 17, def: { rx: 1, ry: 0.56 },
       render: () => (
         <div className={`hl-armor ${armorH ? "row" : ""}`}>
           {[92, 78, 64, 41, 88].slice(0, armorN).map((p, i) => (
@@ -72,7 +72,7 @@ function specs(opt: (id: string, key: string) => OptionValue | undefined): Recor
       ),
     },
     items: {
-      w: 40, h: 51, def: { rx: 1, ry: 0.45 },
+      w: 40, h: 51, def: { rx: 1, ry: 0.22 },
       render: () => (
         <div className="hl-armor items">
           {[["#3f9e8a", 16], ["#f2c94c", 12], ["#e0557a", 7]].map(([c, n], i) => (

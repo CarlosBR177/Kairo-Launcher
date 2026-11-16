@@ -27,7 +27,7 @@ public final class ArmorModule extends HudModule {
 
 	public ArmorModule() {
 		super("armor", "Armadura", "Peças vestidas e item na mão com a durabilidade.", true, 4, 210);
-		defaultAnchor(0.0, 0.62);
+		defaultAnchor(1.0, 0.56);
 	}
 
 	private List<ItemStack> stacks(Minecraft mc) {

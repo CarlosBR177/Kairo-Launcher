@@ -26,7 +26,7 @@ public final class ItemCounterModule extends HudModule {
 
 	public ItemCounterModule() {
 		super("items", "Contador de itens", "Pérolas, maçãs douradas, poções, flechas e totens no inventário.", false, 4, 310);
-		defaultAnchor(1.0, 0.45);
+		defaultAnchor(1.0, 0.22);
 	}
 
 	private record Entry(ItemStack icon, int count) {}
