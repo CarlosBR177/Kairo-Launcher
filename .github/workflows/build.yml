@@ -81,7 +81,7 @@ jobs:
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         working-directory: launcher
         shell: pwsh
-                env:
+        env:
           KAIRO_MS_CLIENT_ID: ${{ secrets.KAIRO_MS_CLIENT_ID }}
           KAIRO_DISCORD_APP_ID: ${{ secrets.KAIRO_DISCORD_APP_ID }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
